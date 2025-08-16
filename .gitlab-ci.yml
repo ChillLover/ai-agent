@@ -1,0 +1,67 @@
+stages:
+  - build
+  - deploy
+
+image: docker:20.10.16
+
+variables:
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_DRIVER: overlay2 # specifies the storage driver for Docker
+  DOCKER_TLS_CERTDIR: "/certs" # directory where TLS certificates are stored for secure communication with the Docker daemon
+  DOCKER_TLS_VERIFY: 1 # enables TLS verification for secure Docker operations
+  DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client" # path to the client TLS certificates
+  CI_API_PATH: "api"
+  CI_GRADIO_UI_PATH: "gradio-ui"
+  CI_PROJECT_DIR_API: "api"
+  CI_PROJECT_DIR_GRADIO_UI: "ui"
+  PROJECT_NAME: ai-llm
+  API_VERSION: 0.1
+  GRADIO_UI_VERSION: 0.1
+
+services:
+  - docker:20.10.16-dind # Docker-in-Docker (DinD) service image that allows running Docker commands inside a Docker container
+
+before_script:
+  - for try in {1..10}; do sleep 0.5; docker info && break ; done # attempts to connect to the Docker daemon up ensuring the Docker service is available before proceeding
+
+
+build:
+  stage: build
+   # Using kaniko to create a container inside another container for enhanced security.
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+      - cp "$ENV_FILE" .env # copies the environment file to the UI directory if variables are stored in a file
+      - mkdir -p /kaniko/.docker
+      # Upload the container image to the registry. The image is tagged with the commit hash.
+      - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n "json_key:${CI_REGISTRY_KEY}" | base64 | tr -d '\n' )\"}}}" > /kaniko/.docker/config.json
+      - >-
+          /kaniko/executor
+          --context "${CI_PROJECT_DIR_API}"
+          --dockerfile "${CI_PROJECT_DIR_API}/Dockerfile"
+          --destination "${CI_REGISTRY}/${CI_API_PATH}:${API_VERSION}"
+      - >-
+          /kaniko/executor
+          --context "${CI_PROJECT_DIR_GRADIO_UI}"
+          --dockerfile "${CI_PROJECT_DIR_GRADIO_UI}/Dockerfile"
+          --destination "${CI_REGISTRY}/${CI_GRADIO_UI_PATH}:${GRADIO_UI_VERSION}"
+
+
+deploy:
+  stage: deploy
+  image: bitnami/kubectl:latest # uses the latest Bitnami Kubectl image for interacting with Kubernetes
+  script:
+    - kubectl config use-context ${CI_PROJECT_PATH}:gitlab-agent #  account/project:<GitLab_agent_name> Replace <GitLab_agent_name> with the name of the agent in Managed Service for GitLab. 
+
+    # When variables contain special characters like ', / &' ,  using '|' or '@' as a delimiter prevents sed from misinterpreting the values
+    - >-
+      cat k8s.yaml 
+      | sed -e "s,__UI__VERSION__,${CI_REGISTRY}/${CI_GRADIO_UI_PATH}:${GRADIO_UI_VERSION}," 
+      | sed -e "s,__API__VERSION__,${CI_REGISTRY}/${CI_API_PATH}:${API_VERSION}," 
+      | sed -e "s,__PROJECT_NAME__,${PROJECT_NAME},"
+      | sed -e "s|__ALB_INGRESS_SUBNET__|${ALB_INGRESS_SUBNET}|"
+      | sed -e "s|__ALB_INGRESS_SEC_GROUP__|${ALB_INGRESS_SEC_GROUP}|"
+      | kubectl apply -f -
+    # reads the k8s.yaml file
+    # and replaces the VERSION placeholder with the Docker image tag from the build stage, applies the Kubernetes configuration to deploy the app

@@ -1,0 +1,14 @@
+joblib
+fastapi 
+uvicorn
+langchain-deepseek
+langchain-tavily
+langgraph
+langchain
+dotenv
+langchain-core
+langchain-huggingface
+qdrant-client
+langchain-qdrant
+langchain-community
+sentence-transformers

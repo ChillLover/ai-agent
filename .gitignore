@@ -1,0 +1,7 @@
+.env
+.conda
+api/models
+docs
+1.ipynb
+del.txt
+work.ipynb

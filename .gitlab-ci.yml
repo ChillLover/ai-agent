@@ -47,7 +47,6 @@ build:
           --dockerfile "${CI_PROJECT_DIR_GRADIO_UI}/Dockerfile"
           --destination "${CI_REGISTRY}/${CI_GRADIO_UI_PATH}:${GRADIO_UI_VERSION}"
 
-
 deploy:
   stage: deploy
   image: bitnami/kubectl:latest # uses the latest Bitnami Kubectl image for interacting with Kubernetes

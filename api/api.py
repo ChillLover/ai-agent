@@ -1,30 +1,37 @@
 from langchain_deepseek import ChatDeepSeek
 from langchain_tavily import TavilySearch
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.prebuilt import create_react_agent
+from langgraph.prebuilt import create_react_agent, ToolNode, tools_condition
 from langgraph.graph import StateGraph, END, START, MessagesState
 from dotenv import load_dotenv
 import os
+from typing import Annotated, TypedDict, Sequence
+import operator
 import json
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableConfig
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
+from langchain_core.documents import Document
 from langchain.vectorstores import Qdrant
 import uuid
 from qdrant_client import QdrantClient
 from langchain_qdrant import QdrantVectorStore
 from typing import List
+from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader
 from transformers import AutoTokenizer
-from qdrant_client.http.models import Filter, FieldCondition, MatchValue
+from qdrant_client.http.models import Distance, VectorParams, Filter, FieldCondition, MatchValue
 from pydantic import BaseModel, Field
 from langchain.output_parsers import PydanticOutputParser, OutputFixingParser
-import json
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from fastapi import FastAPI
 
 
 load_dotenv()
-client_qd = QdrantClient("http://qdrant:6333")
+client_qd = QdrantClient("http://84.252.132.102:6333")
 app = FastAPI()
+user_id = "1"
+thread_id = "1"
 
 model = ChatDeepSeek(
     model="deepseek-reasoner",
@@ -107,24 +114,32 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-model_kwargs = {"trust_remote_code": True}
-model_name="models/multilingual-e5-large-instruct"
-embeddings = HuggingFaceEmbeddings(model_name=model_name, model_kwargs=model_kwargs)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+QUERY_URL = "http://84.252.132.102"
+common = {"task": "feature-extraction", "model_kwargs": {"normalize": True}}
+query_embedder = HuggingFaceEndpointEmbeddings(model=QUERY_URL, **common)
 
-vs_article_storage = QdrantVectorStore.from_existing_collection(embedding=embeddings, collection_name="articles_collection", url="http://qdrant:6333",)
-vs_model_markdowns = QdrantVectorStore.from_existing_collection(embedding=embeddings, collection_name="model_markdowns", url="http://qdrant:6333",)
+
+vs_article_storage = QdrantVectorStore.from_existing_collection(embedding=query_embedder, collection_name="articles_collection", url="http://84.252.132.102:6333",)
+vs_model_markdowns = QdrantVectorStore.from_existing_collection(embedding=query_embedder, collection_name="model_markdowns", url="http://84.252.132.102:6333",)
 
 @tool
 def search_recall_memories(query: str) -> List[str]:
     """Search for relevant memories."""
-    user_id = "1"
+    user_id = user_id
     qdrant_filter = Filter(must=[FieldCondition(key="metadata.user_id", match=MatchValue(value=user_id))])
     documents = vs_model_markdowns.similarity_search(query, k=3, filter=qdrant_filter)
     
     return [document.page_content for document in documents]
 
-tools = [search_recall_memories, TavilySearch(max_results=1)]
+@tool
+def save_recall_memory(memory: str) -> str:
+    """Save memory to vectorstore for later semantic retrieval."""
+    document = Document(page_content=memory, metadata={"user_id": user_id, 'thread_id': thread_id})
+    vs_model_markdowns.add_documents([document])
+
+    return "info was wrote"
+
+tools = [save_recall_memory, search_recall_memories, TavilySearch(max_results=1)]
 
 def agent(state: State) -> State:
     bound = prompt | create_react_agent(model, tools)

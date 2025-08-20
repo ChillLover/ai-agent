@@ -4,7 +4,7 @@ import json
 
 
 def get_preds(request):
-    preds = requests.post("http://api-ai-llm:8000/check_request", json={"request": request})
+    preds = requests.post("http://api:8000/check_request", json={"request": request})
 
     if preds.status_code == 200:
         preds = json.loads(preds.text)["Answer"]

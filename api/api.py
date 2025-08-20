@@ -31,7 +31,6 @@ load_dotenv()
 client_qd = QdrantClient("http://84.252.132.102:6333")
 app = FastAPI()
 user_id = "1"
-thread_id = "1"
 
 model = ChatDeepSeek(
     model="deepseek-reasoner",
@@ -118,28 +117,30 @@ QUERY_URL = "http://84.252.132.102"
 common = {"task": "feature-extraction", "model_kwargs": {"normalize": True}}
 query_embedder = HuggingFaceEndpointEmbeddings(model=QUERY_URL, **common)
 
-
 vs_article_storage = QdrantVectorStore.from_existing_collection(embedding=query_embedder, collection_name="articles_collection", url="http://84.252.132.102:6333",)
 vs_model_markdowns = QdrantVectorStore.from_existing_collection(embedding=query_embedder, collection_name="model_markdowns", url="http://84.252.132.102:6333",)
+
 
 @tool
 def search_recall_memories(query: str) -> List[str]:
     """Search for relevant memories."""
-    user_id = user_id
     qdrant_filter = Filter(must=[FieldCondition(key="metadata.user_id", match=MatchValue(value=user_id))])
     documents = vs_model_markdowns.similarity_search(query, k=3, filter=qdrant_filter)
     
     return [document.page_content for document in documents]
 
+
 @tool
 def save_recall_memory(memory: str) -> str:
     """Save memory to vectorstore for later semantic retrieval."""
-    document = Document(page_content=memory, metadata={"user_id": user_id, 'thread_id': thread_id})
+    document = Document(page_content=memory, metadata={"user_id": user_id})
     vs_model_markdowns.add_documents([document])
 
-    return "info was wrote"
+    return "Info was written"
+
 
 tools = [save_recall_memory, search_recall_memories, TavilySearch(max_results=1)]
+
 
 def agent(state: State) -> State:
     bound = prompt | create_react_agent(model, tools)
@@ -148,6 +149,7 @@ def agent(state: State) -> State:
     prediction = parser.invoke(prediction["messages"][-1])
 
     return {"messages": [{"role": "assistant", "content": prediction.model_dump_json()}], "retry_count": 0}
+
 
 def load_memories(state: State) -> State:
     sim_search = vs_article_storage.similarity_search(state["messages"][-1].content, k=3)

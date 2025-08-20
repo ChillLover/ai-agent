@@ -11,4 +11,4 @@ langchain-huggingface
 qdrant-client
 langchain-qdrant
 langchain-community
-sentence-transformers
+langchain-text-splitters

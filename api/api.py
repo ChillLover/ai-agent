@@ -18,13 +18,12 @@ import uuid
 from qdrant_client import QdrantClient
 from langchain_qdrant import QdrantVectorStore
 from typing import List
-from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader
-from transformers import AutoTokenizer
 from qdrant_client.http.models import Distance, VectorParams, Filter, FieldCondition, MatchValue
 from pydantic import BaseModel, Field
 from langchain.output_parsers import PydanticOutputParser, OutputFixingParser
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from fastapi import FastAPI
+from langchain_text_splitters import CharacterTextSplitter
 
 
 load_dotenv()
@@ -152,7 +151,13 @@ def agent(state: State) -> State:
 
 
 def load_memories(state: State) -> State:
-    sim_search = vs_article_storage.similarity_search(state["messages"][-1].content, k=3)
+    theme = model.invoke(f"Highlight the main idea of the inputed text in five sentences in russian: {state['messages'][-1].content}")
+
+    text_splitter = CharacterTextSplitter.from_tiktoken_encoder(encoding_name="cl100k_base", chunk_size=500, chunk_overlap=0)
+
+    theme = text_splitter.split_text(theme.content)
+
+    sim_search = vs_article_storage.similarity_search(theme[0], k=3)
 
     return {"recall_memories": [document.page_content for document in sim_search]}
 

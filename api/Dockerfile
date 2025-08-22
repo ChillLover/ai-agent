@@ -1,8 +1,8 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN pip uninstall -y pip && apt-get update && apt-get install -y python3-pip --reinstall
+RUN pip install --upgrade pip setuptools
 
 COPY requirements.txt .
 

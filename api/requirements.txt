@@ -5,10 +5,11 @@ langchain-deepseek
 langchain-tavily
 langgraph
 langchain
-dotenv
+python-dotenv
 langchain-core
 langchain-huggingface
 qdrant-client
 langchain-qdrant
 langchain-community
 langchain-text-splitters
+resolvelib

@@ -2,3 +2,4 @@ gradio
 requests
 pdf2image
 pytesseract
+supertools

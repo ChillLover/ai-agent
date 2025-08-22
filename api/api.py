@@ -151,10 +151,8 @@ def agent(state: State) -> State:
 
 
 def load_memories(state: State) -> State:
-    theme = model.invoke(f"Highlight the main idea of the inputed text in five sentences in russian: {state['messages'][-1].content}")
-
+    theme = model.invoke(f"Highlight the main idea of the inputted text in a few sentences in russian: {state['messages'][-1].content}")
     text_splitter = CharacterTextSplitter.from_tiktoken_encoder(encoding_name="cl100k_base", chunk_size=500, chunk_overlap=0)
-
     theme = text_splitter.split_text(theme.content)
 
     sim_search = vs_article_storage.similarity_search(theme[0], k=3)

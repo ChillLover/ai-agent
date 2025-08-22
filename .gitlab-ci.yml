@@ -14,7 +14,7 @@ variables:
   CI_GRADIO_UI_PATH: "gradio-ui"
   CI_PROJECT_DIR_API: "api"
   CI_PROJECT_DIR_GRADIO_UI: "ui"
-  PROJECT_NAME: ai-llm
+  PROJECT_NAME: agent
   API_VERSION: 0.1
   GRADIO_UI_VERSION: 0.1
 

@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip supertools
+RUN pip uninstall -y pip && apt-get update && apt-get install -y python3-pip --reinstall
 
 COPY requirements.txt .
 

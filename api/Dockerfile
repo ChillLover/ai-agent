@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN pip install --upgrade pip setuptools
+RUN pip uninstall -y pip && apt-get update && apt-get install -y python3-pip --reinstall
 
 COPY requirements.txt .
 

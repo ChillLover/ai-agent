@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN pip install --upgrade pip supertools
+RUN pip install --upgrade pip setuptools
 
 COPY requirements.txt .
 

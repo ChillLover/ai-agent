@@ -32,8 +32,7 @@ build:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   script:
-      - cat "$ENV_FILE"
-      - cp "$ENV_FILE" ./api/.env # copies the environment file to the UI directory if variables are stored in a file
+      - cp "$ENV_FILE" ./api/.env
       - mkdir -p /kaniko/.docker
       # Upload the container image to the registry. The image is tagged with the commit hash.
       - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n "json_key:${CI_REGISTRY_KEY}" | base64 | tr -d '\n' )\"}}}" > /kaniko/.docker/config.json

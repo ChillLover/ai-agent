@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y \
     libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python -m pip install pip==23.1.2 && \
-    pip install --upgrade pip
+RUN python -m ensurepip --upgrade && \
+    python -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
 COPY requirements.txt .
 

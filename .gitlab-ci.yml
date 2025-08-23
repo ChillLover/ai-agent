@@ -17,14 +17,11 @@ variables:
   PROJECT_NAME: llm
   API_VERSION: 0.2
   GRADIO_UI_VERSION: 0.2
-  ENV_FILE: ".env"
 
 services:
   - docker:20.10.16-dind # Docker-in-Docker (DinD) service image that allows running Docker commands inside a Docker container
 
 before_script:
-  - cp "$ENV_FILE" .env # copies the environment file to the UI directory if variables are stored in a file
-  - cat .env
   - for try in {1..10}; do sleep 0.5; docker info && break ; done # attempts to connect to the Docker daemon up ensuring the Docker service is available before proceeding
 
 
@@ -36,6 +33,7 @@ build:
     entrypoint: [""]
   script:
       - cp "$ENV_FILE" .env # copies the environment file to the UI directory if variables are stored in a file
+      - cat .env
       - mkdir -p /kaniko/.docker
       # Upload the container image to the registry. The image is tagged with the commit hash.
       - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n "json_key:${CI_REGISTRY_KEY}" | base64 | tr -d '\n' )\"}}}" > /kaniko/.docker/config.json

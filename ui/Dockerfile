@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python -m pip install --upgrade pip
+RUN pip install --upgrade pip
 
 COPY requirements.txt .
 

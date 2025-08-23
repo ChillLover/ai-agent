@@ -31,7 +31,7 @@ model = ChatDeepSeek(
     max_tokens=None,
     timeout=None,
     max_retries=2,
-    api_key=os.getenv("DEEPSEEK_API_KEY"),
+    api_key=deepseek_api_key,
 )
 
 
@@ -132,7 +132,7 @@ def save_recall_memory(memory: str) -> str:
     return "Info was written"
 
 
-tools = [save_recall_memory, search_recall_memories, TavilySearch(max_results=1)]
+tools = [save_recall_memory, search_recall_memories, TavilySearch(max_results=1, api_key=tavily_api_key)]
 
 
 def agent(state: State) -> State:

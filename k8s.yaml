@@ -31,12 +31,12 @@ spec:
               mountPath: /etc/nginx
               readOnly: true
           resources:
-            limits:
-              cpu: "2"
-              memory: "2Gi"
             requests:
               cpu: "1"
               memory: "1Gi"
+            limits:
+              cpu: "1.5"
+              memory: "1.5Gi"
 ---
 apiVersion: v1
 kind: Service
@@ -109,12 +109,12 @@ spec: # defines the desired state for the deployment
               mountPath: /etc/nginx
               readOnly: true  
           resources:
-            limits:
-              cpu: "2"
-              memory: "2Gi"
             requests:
               cpu: "1"
               memory: "1Gi"
+            limits:
+              cpu: "1.5"
+              memory: "1.5Gi"
 ---
 apiVersion: v1 # specifies the API version for the Service resource
 kind: Service

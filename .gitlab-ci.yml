@@ -15,8 +15,8 @@ variables:
   CI_PROJECT_DIR_API: "api"
   CI_PROJECT_DIR_GRADIO_UI: "ui"
   PROJECT_NAME: llm
-  API_VERSION: 0.1
-  GRADIO_UI_VERSION: 0.1
+  API_VERSION: 0.2
+  GRADIO_UI_VERSION: 0.2
 
 services:
   - docker:20.10.16-dind # Docker-in-Docker (DinD) service image that allows running Docker commands inside a Docker container

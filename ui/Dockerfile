@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python -m ensurepip --upgrade && \
-    python -m pip install --no-cache-dir --upgrade pip setuptools wheel
+    python -m pip install --force-reinstall "pip<24.0" && \
+    pip install --upgrade setuptools wheel
 
 COPY requirements.txt .
 

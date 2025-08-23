@@ -31,7 +31,7 @@ model = ChatDeepSeek(
     max_tokens=None,
     timeout=None,
     max_retries=2,
-    api_key=os.getenv("DEEPSEEK_KEY"),
+    api_key=os.getenv("DEEPSEEK_API_KEY"),
 )
 
 

@@ -20,7 +20,7 @@ from fastapi import FastAPI
 from langchain_text_splitters import CharacterTextSplitter
 
 
-load_dotenv()
+load_dotenv(".env")
 client_qd = QdrantClient("http://84.252.132.102:6333")
 app = FastAPI()
 user_id = "1"

@@ -2,7 +2,8 @@ FROM python:3.11.9-slim
 
 WORKDIR /app
 
-RUN pip install --upgrade pip
+RUN python -m pip install pip==23.1.2 && \
+    pip install --upgrade pip
 
 COPY requirements.txt .
 

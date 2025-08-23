@@ -41,11 +41,11 @@ build:
           --context "${CI_PROJECT_DIR_API}"
           --dockerfile "${CI_PROJECT_DIR_API}/Dockerfile"
           --destination "${CI_REGISTRY}/${CI_API_PATH}:${API_VERSION}"
-      # - >-
-      #     /kaniko/executor
-      #     --context "${CI_PROJECT_DIR_GRADIO_UI}"
-      #     --dockerfile "${CI_PROJECT_DIR_GRADIO_UI}/Dockerfile"
-      #     --destination "${CI_REGISTRY}/${CI_GRADIO_UI_PATH}:${GRADIO_UI_VERSION}"
+      - >-
+          /kaniko/executor
+          --context "${CI_PROJECT_DIR_GRADIO_UI}"
+          --dockerfile "${CI_PROJECT_DIR_GRADIO_UI}/Dockerfile"
+          --destination "${CI_REGISTRY}/${CI_GRADIO_UI_PATH}:${GRADIO_UI_VERSION}"
 
 deploy:
   stage: deploy

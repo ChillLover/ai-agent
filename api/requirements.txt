@@ -11,6 +11,3 @@ langchain-huggingface
 qdrant-client
 langchain-qdrant
 langchain-community
-langchain-text-splitters
-resolvelib
-supertools

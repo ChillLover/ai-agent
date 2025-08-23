@@ -1,24 +1,18 @@
 from langchain_deepseek import ChatDeepSeek
 from langchain_tavily import TavilySearch
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.prebuilt import create_react_agent, ToolNode, tools_condition
+from langgraph.prebuilt import create_react_agent
 from langgraph.graph import StateGraph, END, START, MessagesState
 from dotenv import load_dotenv
 import os
-from typing import Annotated, TypedDict, Sequence
-import operator
 import json
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnableConfig
-from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_core.documents import Document
-from langchain.vectorstores import Qdrant
-import uuid
 from qdrant_client import QdrantClient
 from langchain_qdrant import QdrantVectorStore
 from typing import List
-from qdrant_client.http.models import Distance, VectorParams, Filter, FieldCondition, MatchValue
+from qdrant_client.http.models import Filter, FieldCondition, MatchValue
 from pydantic import BaseModel, Field
 from langchain.output_parsers import PydanticOutputParser, OutputFixingParser
 from langchain_huggingface import HuggingFaceEndpointEmbeddings

@@ -32,10 +32,10 @@ spec:
               readOnly: true
           resources:
             limits:
-              cpu: "3.5"
+              cpu: "2"
               memory: "2Gi"
             requests:
-              cpu: "1.5"
+              cpu: "1"
               memory: "1Gi"
 ---
 apiVersion: v1
@@ -110,8 +110,8 @@ spec: # defines the desired state for the deployment
               readOnly: true  
           resources:
             limits:
-              cpu: "3"
-              memory: "3Gi"
+              cpu: "2"
+              memory: "2Gi"
             requests:
               cpu: "1"
               memory: "1Gi"

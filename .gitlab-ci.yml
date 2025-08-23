@@ -15,8 +15,8 @@ variables:
   CI_PROJECT_DIR_API: "api"
   CI_PROJECT_DIR_GRADIO_UI: "ui"
   PROJECT_NAME: agent
-  API_VERSION: 0.1
-  GRADIO_UI_VERSION: 0.1
+  API_VERSION: 0.2
+  GRADIO_UI_VERSION: 0.2
 
 services:
   - docker:20.10.16-dind # Docker-in-Docker (DinD) service image that allows running Docker commands inside a Docker container
@@ -36,11 +36,11 @@ build:
       - mkdir -p /kaniko/.docker
       # Upload the container image to the registry. The image is tagged with the commit hash.
       - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n "json_key:${CI_REGISTRY_KEY}" | base64 | tr -d '\n' )\"}}}" > /kaniko/.docker/config.json
-      - >-
-          /kaniko/executor
-          --context "${CI_PROJECT_DIR_API}"
-          --dockerfile "${CI_PROJECT_DIR_API}/Dockerfile"
-          --destination "${CI_REGISTRY}/${CI_API_PATH}:${API_VERSION}"
+      # - >-
+      #     /kaniko/executor
+      #     --context "${CI_PROJECT_DIR_API}"
+      #     --dockerfile "${CI_PROJECT_DIR_API}/Dockerfile"
+      #     --destination "${CI_REGISTRY}/${CI_API_PATH}:${API_VERSION}"
       - >-
           /kaniko/executor
           --context "${CI_PROJECT_DIR_GRADIO_UI}"

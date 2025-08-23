@@ -32,8 +32,8 @@ spec:
               readOnly: true
           resources:
             limits:
-              cpu: "2"
-              memory: "2Gi"
+              cpu: "1"
+              memory: "1Gi"
             requests:
               cpu: "1"
               memory: "1Gi"
@@ -110,8 +110,8 @@ spec: # defines the desired state for the deployment
               readOnly: true  
           resources:
             limits:
-              cpu: "2"
-              memory: "2Gi"
+              cpu: "1"
+              memory: "1Gi"
             requests:
               cpu: "1"
               memory: "1Gi"

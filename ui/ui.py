@@ -3,6 +3,8 @@ import requests
 import json
 from pdf2image import convert_from_path
 from pytesseract import image_to_string
+import httpx
+
 
 def get_preds(request):
     images = convert_from_path(request)

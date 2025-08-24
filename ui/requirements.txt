@@ -1,5 +1,5 @@
 requests
-gradio
+gradio==5.35.0
 pandas
 # pdf2image
 # pytesseract

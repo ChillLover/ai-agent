@@ -9,12 +9,12 @@ RUN apt-get update && apt-get install -y \
     libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
-# RUN python -m ensurepip --upgrade && \
-#     python -m pip install --force-reinstall "pip<25.0" && \
-#     pip install --upgrade setuptools wheel
-
 RUN python -m ensurepip --upgrade && \
-    pip install --upgrade pip setuptools wheel
+    python -m pip install --force-reinstall "pip<25.0" && \
+    pip install --upgrade setuptools wheel
+
+# RUN python -m ensurepip --upgrade && \
+#     pip install --upgrade pip setuptools wheel
 
 COPY requirements.txt .
 

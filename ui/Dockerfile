@@ -56,7 +56,7 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY gradio_ui.py .
+COPY ui.py .
 
-CMD ["python", "gradio_ui.py"]
+CMD ["python", "ui.py"]
 

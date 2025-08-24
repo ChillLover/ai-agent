@@ -1,5 +1,6 @@
 requests
 gradio==5.35.0
 pandas
+numpy
 # pdf2image
 # pytesseract

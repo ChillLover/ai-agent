@@ -10,13 +10,13 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs" # directory where TLS certificates are stored for secure communication with the Docker daemon
   DOCKER_TLS_VERIFY: 1 # enables TLS verification for secure Docker operations
   DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client" # path to the client TLS certificates
-  CI_API_PATH: "api"
-  CI_GRADIO_UI_PATH: "gradio-ui"
   CI_PROJECT_DIR_API: "api"
   CI_PROJECT_DIR_GRADIO_UI: "ui"
+  CI_API_PATH: "api-llm"
+  CI_GRADIO_UI_PATH: "ui-llm"
   PROJECT_NAME: llm
-  API_VERSION: 0.2
-  GRADIO_UI_VERSION: 0.2
+  API_VERSION: 0.1
+  GRADIO_UI_VERSION: 0.1
 
 services:
   - docker:20.10.16-dind # Docker-in-Docker (DinD) service image that allows running Docker commands inside a Docker container
@@ -32,7 +32,6 @@ build:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   script:
-      - cat "$ENV_FILE"
       - cp "$ENV_FILE" ./api/.env
       - mkdir -p /kaniko/.docker
       # Upload the container image to the registry. The image is tagged with the commit hash.

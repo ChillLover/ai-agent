@@ -24,17 +24,6 @@ spec:
       containers:
         - name: api-__PROJECT_NAME__
           image: __API__VERSION__
-          env:
-            - name: DEEPSEEK_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: deepseek-api-key
-                  key: DEEPSEEK_API_KEY
-            - name: TAVILY_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: tavily-api-key
-                  key: TAVILY_API_KEY
           ports:
             - containerPort: 8000
           volumeMounts:

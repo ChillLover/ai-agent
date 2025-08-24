@@ -38,6 +38,8 @@ RUN python -m pip install --upgrade "pip==23.3.2"
 
 COPY requirements.txt .
 
+RUN pip install --no-cache-dir httpx==0.25.0
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ui.py .

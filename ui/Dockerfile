@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-RUN python -m pip install --upgrade pip
+RUN python -m pip install --upgrade "pip==23.3.2"
 
 COPY requirements.txt .
 

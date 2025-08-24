@@ -21,7 +21,7 @@ FROM python:3.10-bullseye
 
 WORKDIR /app
 
-RUN python -m pip install --upgrade pip
+RUN python -m pip install --upgrade "pip==23.3.2"
 
 COPY requirements.txt .
 

@@ -1,3 +1,4 @@
 requests
-pdf2image
-pytesseract
+gradio
+# pdf2image
+# pytesseract

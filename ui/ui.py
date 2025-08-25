@@ -15,7 +15,7 @@ def get_preds(request):
     
     text = text.replace("\n", "")
 
-    preds = requests.post("http://api-llm:8000/check_request", json={"request": text})
+    preds = requests.post("http://api-llm:3000/check_request", json={"request": text})
 
     if preds.status_code == 200:
         preds = json.loads(preds.text)["Answer"]

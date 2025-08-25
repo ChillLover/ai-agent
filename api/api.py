@@ -16,8 +16,12 @@ from qdrant_client.http.models import Filter, FieldCondition, MatchValue
 from pydantic import BaseModel, Field
 from langchain.output_parsers import PydanticOutputParser, OutputFixingParser
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
-from fastapi import FastAPI
 from langchain_text_splitters import CharacterTextSplitter
+from pdf2image import convert_from_path
+from pytesseract import image_to_string
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import JSONResponse
+import shutil
 
 
 load_dotenv()
@@ -44,10 +48,6 @@ class Template(BaseModel):
     fulfillment: str = Field(..., description="Provide reasons for possibility of fulfilling this reqeust by the head of the party" \
                               "if it is not that hard to fuilfill otherwise write that it is not possible to fulfill")
     final_result: bool = Field(..., description="Write 'True' only if the reqeust if possible to be fulfilled otherwise write 'False'")
-
-
-class Input(BaseModel):
-    request: str = Field(..., description="Request from a user for the LLM")
 
 
 parser = PydanticOutputParser(pydantic_object=Template)
@@ -169,7 +169,21 @@ config = {"configurable": {"user_id": "1", "thread_id": "1"}}
 
 
 @app.post("/check_request")
-async def check_request(data: Input):
-    preds = graph.invoke({"messages": [(json.loads(data.model_dump_json())["request"])]}, config)
+async def check_request(file: UploadFile=File(...)):
+    file_location = f"temp_{file.filename}"
+
+    with open(file_location, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    images = convert_from_path(file_location)
+
+    text = ""
+    for image in images:
+        page_text = image_to_string(image, lang="rus+eng")
+        text += f"{page_text}"
+    
+    preds = graph.invoke({"messages": [(text)]}, config)
+
+    os.remove(file_location)
 
     return {"Answer": json.loads(preds["messages"][-1].content)}

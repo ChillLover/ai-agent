@@ -1,4 +1,2 @@
 requests
 gradio
-pdf2image
-pytesseract

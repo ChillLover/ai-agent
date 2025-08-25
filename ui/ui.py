@@ -1,21 +1,13 @@
 import gradio as gr
 import requests
 import json
-from pdf2image import convert_from_path
-from pytesseract import image_to_string
+import os
 
 
-def get_preds(request):
-    images = convert_from_path(request)
-    
-    text = ""
-    for image in images:
-       page_text = image_to_string(image, lang="rus+eng")
-       text += f"{page_text}"
-    
-    text = text.replace("\n", "")
-
-    preds = requests.post("http://api-llm:3000/check_request", json={"request": text})
+def get_preds(pdf_file):
+    with open(pdf_file.name, "rb") as file:
+        files = {"file": (os.path.basename(pdf_file.name), file, "application/pdf")}
+        preds = requests.post("http://api-llm:3000/check_request", files=files) # "http://api-llm:3000/check_request" | "http://api:8000/check_request"
 
     if preds.status_code == 200:
         preds = json.loads(preds.text)["Answer"]
@@ -29,7 +21,7 @@ def get_preds(request):
 
 with gr.Blocks() as demo:
     with gr.Column():
-      input = gr.File(file_types=[".pdf"])
+      input = gr.File(file_types=[".pdf"], file_count="single")
       sub_button = gr.Button(value="Получить решение по запросу")
       output = gr.Textbox(placeholder="Решение по вашему обращению")
       sub_button.click(get_preds, input, output)

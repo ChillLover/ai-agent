@@ -11,3 +11,6 @@ qdrant-client
 langchain-qdrant
 pydantic
 langchain-text-splitters
+pdf2image
+pytesseract
+python-multipart

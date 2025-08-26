@@ -5,8 +5,8 @@ import os
 
 
 def get_preds(pdf_file):
-    with open(pdf_file.name, "rb") as file:
-        files = {"file": (os.path.basename(pdf_file.name), file, "application/pdf")}
+    with open(pdf_file, "rb") as file:
+        files = {"file": (os.path.basename(pdf_file), file, "application/pdf")}
         preds = requests.post("http://api-llm:3000/check_request", files=files) # "http://api-llm:3000/check_request" | "http://api:8000/check_request"
 
     if preds.status_code == 200:

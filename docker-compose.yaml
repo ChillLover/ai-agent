@@ -6,10 +6,65 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    restart: unless-stopped
+    # depends_on:
+    #   - qdrant
+    #   - ollama
+    #   - phoenix
+
   ui:
     build:
       context: ./ui
     ports:
       - "7860:7860"
+    restart: unless-stopped
     depends_on:
       - api
+
+#   qdrant:
+#     image: qdrant/qdrant:latest
+#     container_name: qdrant
+#     restart: unless-stopped
+#     ports:
+#       - "6333:6333"
+#       - "6334:6334"
+#     volumes:
+#       - qdrant_collections:/qdrant/storage
+
+#   ollama:
+#     image: ollama/ollama:latest
+#     container_name: ollama
+#     restart: unless-stopped
+#     ports: 
+#       - "11434:11434"
+#     environment:
+#       - OLLAMA_HOST=0.0.0.0:11434
+#       - OLLAMA_MODELS=/models
+#     volumes:
+#       - ollama_models:/models
+    
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               capabilities: [gpu]
+#               count: all
+  
+#   phoenix:
+#     image: arizephoenix/phoenix:latest
+#     container_name: phoenix
+#     restart: unless-stopped
+#     ports:
+#       - "6006:6006"
+#       - "4317:4317"
+#     volumes:
+#       - phoenix_data:/mnt/data
+#     environment:
+#       - PHOENIX_WORKING_DIR=/mnt/data
+
+# volumes:
+#   qdrant_collections:
+#   ollama_models:
+#   phoenix_data:
+#     driver: local

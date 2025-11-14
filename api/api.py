@@ -1,33 +1,54 @@
 from langchain_deepseek import ChatDeepSeek
 from langchain_tavily import TavilySearch
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import InMemorySaver
+from langchain.agents import create_agent
 from langgraph.graph import StateGraph, END, START, MessagesState
-from dotenv import load_dotenv
-import os
-import json
-from langchain_core.tools import tool
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.documents import Document
-from qdrant_client import QdrantClient
-from langchain_qdrant import QdrantVectorStore
-from typing import List
-from qdrant_client.http.models import Filter, FieldCondition, MatchValue
-from pydantic import BaseModel, Field
-from langchain.output_parsers import PydanticOutputParser, OutputFixingParser
+from langchain_ollama import OllamaEmbeddings
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
+from langchain_qdrant import QdrantVectorStore
+from langchain.tools import tool, ToolRuntime
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.documents import Document
+
+from dotenv import load_dotenv
+
+from datetime import datetime
+
+import os
+
+import json
+
+import shutil
+
+from typing import List, Dict, Any
+
+from qdrant_client import QdrantClient, models
+from qdrant_client.http.models import Filter, FieldCondition, MatchValue
+from pydantic import BaseModel, Field
+
 from pdf2image import convert_from_path
+
 from pytesseract import image_to_string
+
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
-import shutil
+
+# from phoenix.otel import register
+# from openinference.instrumentation.langchain import LangChainInstrumentor
 
 
 load_dotenv()
-client_qd = QdrantClient("http://84.252.132.102:6333")
+client_qd = QdrantClient("http://84.252.132.102:6333") # "http://localhost:6333" | "http://84.252.132.102:6333"
 app = FastAPI()
 user_id = "1"
+LangChainInstrumentor().instrument()
+
+# tracer_provider = register(
+#   project_name="party",
+#   endpoint="http://phoenix:6006/v1/traces",
+#   auto_instrument=True
+# )
 
 model = ChatDeepSeek(
     model="deepseek-reasoner",
@@ -38,73 +59,10 @@ model = ChatDeepSeek(
     api_key=os.getenv("DEEPSEEK_API_KEY"),
 )
 
-
-class State(MessagesState):
-    recall_memories: List[str]
-
-
-class Template(BaseModel):
-    reasoner: str = Field(..., description="Provide reasons why this request should or should not be fulfilled based on Russia's laws")
-    fulfillment: str = Field(..., description="Provide reasons for possibility of fulfilling this reqeust by the head of the party" \
-                              "if it is not that hard to fuilfill otherwise write that it is not possible to fulfill")
-    final_result: bool = Field(..., description="Write 'True' only if the reqeust if possible to be fulfilled otherwise write 'False'")
-
-
-parser = PydanticOutputParser(pydantic_object=Template)
-format_instructions = parser.get_format_instructions()
-fixed_parser = OutputFixingParser.from_llm(parser=parser, llm=model)
-
-prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            "You are a helpful assistant with advanced long-term memory"
-            " capabilities. Powered by a stateless LLM, you must rely on"
-            " external memory to store information between conversations."
-            " Utilize the available memory tools to store and retrieve"
-            " important details that will help you better attend to the user's"
-            " needs and understand their context.\n"
-            "You are working in a russian socialist party and your job is to verify citizen's requests before fulfillment based on laws.\n\n"
-            "Memory Usage Guidelines:\n"
-            "1. Actively use memory tools (save_core_memory, save_recall_memory)"
-            " to build a comprehensive understanding of the user.\n"
-            "2. Make informed suppositions and extrapolations based on stored"
-            " memories.\n"
-            "3. Regularly reflect on past interactions to identify patterns and"
-            " preferences.\n"
-            "4. Update your mental model of the user with each new piece of"
-            " information.\n"
-            "5. Cross-reference new information with existing memories for"
-            " consistency.\n"
-            "6. Prioritize storing emotional context and personal values"
-            " alongside facts.\n"
-            "7. Use memory to anticipate needs and tailor responses to the"
-            " user's style.\n"
-            "8. Recognize and acknowledge changes in the user's situation or"
-            " perspectives over time.\n"
-            "9. Leverage memories to provide personalized examples and"
-            " analogies.\n"
-            "10. Recall past challenges or successes to inform current"
-            " problem-solving.\n\n"
-            "## Recall Memories\n"
-            "Recall memories are contextually retrieved based on the current"
-            " conversation:\n{recall_memories}\n\n"
-            "## Instructions\n"
-            "Engage with the user naturally, as a trusted colleague or friend."
-            " There's no need to explicitly mention your memory capabilities."
-            " Instead, seamlessly incorporate your understanding of the user"
-            " into your responses. Be attentive to subtle cues and underlying"
-            " emotions. Adapt your communication style to match the user's"
-            " preferences and current emotional state. Use tools to persist"
-            " information you want to retain in the next conversation. If you"
-            " do call tools, all text preceding the tool call is an internal"
-            " message. Respond AFTER calling the tool, once you have"
-            " confirmation that the tool completed successfully.\n\n"
-            " Please provide your response in the following JSON format:\n{format_instructions}."
-        ),
-        ("placeholder", "{messages}"),
-    ]
-)
+# query_embedder = OllamaEmbeddings(
+#     model="hf.co/dengcao/Qwen3-Embedding-0.6B-GGUF:Q8_0",
+#     base_url="http://ollama:11434",
+# )
 
 QUERY_URL = "http://84.252.132.102"
 common = {"task": "feature-extraction", "model_kwargs": {"normalize": True}}
@@ -113,56 +71,93 @@ query_embedder = HuggingFaceEndpointEmbeddings(model=QUERY_URL, **common)
 vs_article_storage = QdrantVectorStore.from_existing_collection(embedding=query_embedder, collection_name="articles_collection", url="http://84.252.132.102:6333",)
 vs_model_markdowns = QdrantVectorStore.from_existing_collection(embedding=query_embedder, collection_name="model_markdowns", url="http://84.252.132.102:6333",)
 
+class State(MessagesState):
+    recall_memories: List[str]
+    theme_of_the_request: str
+
+class response(BaseModel):
+    reasoner: str = Field(..., description="Provide reasons why this request should or should not be fulfilled based on Russia's laws.")
+    fulfillment: str = Field(..., description="Provide ways how to fulfill civilian request by the head of the party if it can be done based on the reasoner otherwise" \
+    "write that it is not possible to fulfill.")
+    final_result: bool = Field(..., description="Write 'True' if the head of the party can fulfill the request otherwise write 'False'.")
+
+prompt = ChatPromptTemplate([
+    ("system",
+    """
+    You are a useful assistant in the Socialist Party. Your task is to evaluate the possibilities of solving the problems described in the citizens' appeals based on the legislation of the Russian Federation. You will have to determine whether the head of the party can solve the problem described in the appeal or not. 
+    You have access to those tools: 
+    1. search_memory - This tool is needed in order to find additional information in the RAG system. You can use this information to make your final answer. If you have similar information that you gained frim the RAG you can make the same answer based on this similar information.
+    2. tavily_search - This tool is needed to search for information on the Internet. Use it whenever you want or you don't have enough information to form your conclusion. Always check the information several times before forming your conclusion and try to use only verified data. If any articles of the law of the Russian Federation are mentioned, then try to study the article to accurately convey the essence of the article.
+    
+    Also you will get similar info from the RAG system at the start of your work. It wil be marked like this: <recall_memory> some info </recall_memory>. Those are examples with reasonings on similar problems.
+    Please provide your conclusion in Russian.
+
+    Recall_memories: {recall_memories}
+    """),
+    ("human",
+    """
+    {messages}
+    """)
+])
+
 
 @tool
-def search_recall_memories(query: str) -> List[str]:
-    """Search for relevant memories."""
+def search_memory(query: str) -> List[str]:
+    """This tool allows you to gain additional information from the RAG that you can use to make decisions"""
+
     qdrant_filter = Filter(must=[FieldCondition(key="metadata.user_id", match=MatchValue(value=user_id))])
     documents = vs_model_markdowns.similarity_search(query, k=3, filter=qdrant_filter)
     
     return [document.page_content for document in documents]
 
 
-@tool
-def save_recall_memory(memory: str) -> str:
-    """Save memory to vectorstore for later semantic retrieval."""
-    document = Document(page_content=memory, metadata={"user_id": user_id})
+def save_final_result(state: State) -> str:
+    data = str({"input": state["theme_of_the_request"][-1], "output": state["messages"][-1].content})
+
+    document = Document(page_content=data, metadata={"user_id": user_id, "timestamp": datetime.now()})
     vs_model_markdowns.add_documents([document])
 
-    return "Info was written"
-
-
-tools = [save_recall_memory, search_recall_memories, TavilySearch(max_results=1)]
-
-
-def agent(state: State) -> State:
-    bound = prompt | create_react_agent(model, tools)
-    recall_str = ("<recall_memory>\n" + "\n".join(state["recall_memories"]) + "\n</recall_memory>")
-    prediction = bound.invoke({"messages": state["messages"], "recall_memories": recall_str, "format_instructions": format_instructions})
-    prediction = parser.invoke(prediction["messages"][-1])
-
-    return {"messages": [{"role": "assistant", "content": prediction.model_dump_json()}], "retry_count": 0}
+    return None
 
 
 def load_memories(state: State) -> State:
-    theme = model.invoke(f"Highlight the main idea of the inputted text in a few sentences in russian: {state['messages'][-1].content}")
+    theme = model.invoke(f"Highlight the main idea of the inputted text in a few sentences in russian. Do not announce anything just highlight the main theme provide only main theme of the full text. Text of the request: {state['messages'][-1].content}")
     text_splitter = CharacterTextSplitter.from_tiktoken_encoder(encoding_name="cl100k_base", chunk_size=500, chunk_overlap=0)
     theme = text_splitter.split_text(theme.content)
 
     sim_search = vs_article_storage.similarity_search(theme[0], k=3)
 
-    return {"recall_memories": [document.page_content for document in sim_search]}
+    return {"recall_memories": [document.page_content for document in sim_search], "theme_of_the_request": theme}
+
+
+def agent(state):
+    
+    agent = create_agent(
+        model=model,
+        tools=[search_memory, TavilySearch(max_results=3)],
+        response_format=response,
+    )
+
+    bound = prompt | agent
+    recall_str = ("<recall_memory>\n" + "\n".join(state["recall_memories"]) + "\n</recall_memory>")
+    prediction = bound.invoke({"messages": state["messages"], "recall_memories": recall_str})
+    
+    response_data = prediction["structured_response"]
+    
+    return {"messages": [{"role": "assistant", "content": response_data.model_dump_json()}]}
 
 
 builder = StateGraph(State)
 builder.add_node(load_memories)
 builder.add_node(agent)
+builder.add_node(save_final_result)
 
 builder.add_edge(START, "load_memories")
 builder.add_edge("load_memories", "agent")
-builder.add_edge("agent", END)
+builder.add_edge("agent", "save_final_result")
+builder.add_edge("save_final_result", END)
 
-memory = MemorySaver()
+memory = InMemorySaver()
 graph = builder.compile(checkpointer=memory)
 
 config = {"configurable": {"user_id": "1", "thread_id": "1"}}

@@ -1,0 +1,7 @@
+langgraph 
+langchain-core 
+langchain-openai 
+openinference-instrumentation-langchain 
+arize-phoenix
+arize-phoenix-otel
+python-dotenv

@@ -10,3 +10,11 @@ test_docs
 work2.ipynb
 work2.py
 api/.env
+test.ipynb
+api/api2.py
+dataset.csv
+__pycache__
+.vscode
+test.ipynb
+.conda2
+etc

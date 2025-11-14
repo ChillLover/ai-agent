@@ -41,7 +41,6 @@ load_dotenv()
 client_qd = QdrantClient("http://84.252.132.102:6333") # "http://localhost:6333" | "http://84.252.132.102:6333"
 app = FastAPI()
 user_id = "1"
-LangChainInstrumentor().instrument()
 
 # tracer_provider = register(
 #   project_name="party",

@@ -9,6 +9,7 @@ from langchain_qdrant import QdrantVectorStore
 from langchain.tools import tool, ToolRuntime
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
+from langchain_ollama import OllamaEmbeddings
 
 from dotenv import load_dotenv
 
@@ -57,14 +58,14 @@ model = ChatDeepSeek(
     api_key=os.getenv("DEEPSEEK_API_KEY"),
 )
 
-# query_embedder = OllamaEmbeddings(
-#     model="hf.co/dengcao/Qwen3-Embedding-0.6B-GGUF:Q8_0",
-#     base_url="http://ollama:11434",
-# )
+query_embedder = OllamaEmbeddings(
+    model="hf.co/dengcao/Qwen3-Embedding-0.6B-GGUF:Q8_0",
+    base_url="http://84.252.132.102:11434",
+)
 
-QUERY_URL = "http://84.252.132.102"
-common = {"task": "feature-extraction", "model_kwargs": {"normalize": True}}
-query_embedder = HuggingFaceEndpointEmbeddings(model=QUERY_URL, **common)
+# QUERY_URL = "http://84.252.132.102"
+# common = {"task": "feature-extraction", "model_kwargs": {"normalize": True}}
+# query_embedder = HuggingFaceEndpointEmbeddings(model=QUERY_URL, **common)
 
 vs_article_storage = QdrantVectorStore.from_existing_collection(embedding=query_embedder, collection_name="articles_collection", url="http://84.252.132.102:6333",)
 vs_model_markdowns = QdrantVectorStore.from_existing_collection(embedding=query_embedder, collection_name="model_markdowns", url="http://84.252.132.102:6333",)

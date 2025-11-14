@@ -3,7 +3,6 @@ from langchain_tavily import TavilySearch
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents import create_agent
 from langgraph.graph import StateGraph, END, START, MessagesState
-from langchain_ollama import OllamaEmbeddings
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_qdrant import QdrantVectorStore

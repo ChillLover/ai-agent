@@ -178,7 +178,7 @@ spec:
   tls:
     - hosts:
         - llm.projects-pea.ru # Domain name for which the certificate is issued
-      secretName: yc-certmgr-cert-id-fpq47v311bs46k33ju92
+      secretName: yc-certmgr-cert-id-fpq5fj9ehibcg385kpla
   rules:
     - host: llm.projects-pea.ru
       http:
@@ -197,4 +197,3 @@ spec:
                 name: ui-__PROJECT_NAME__
                 port:
                   number: 3001
----

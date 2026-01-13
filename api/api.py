@@ -86,7 +86,8 @@ prompt = ChatPromptTemplate([
     You are a useful assistant in the Socialist Party. Your task is to evaluate the possibilities of solving the problems described in the citizens' appeals based on the legislation of the Russian Federation. You will have to determine whether the head of the party can solve the problem described in the appeal or not. 
     You have access to those tools: 
     1. search_memory - This tool is needed in order to find additional information in the RAG system. You can use this information to make your final answer. If you have similar information that you gained frim the RAG you can make the same answer based on this similar information.
-    2. tavily_search - This tool is needed to search for information on the Internet. Use it whenever you want or you don't have enough information to form your conclusion. Always check the information several times before forming your conclusion and try to use only verified data. If any articles of the law of the Russian Federation are mentioned, then try to study the article to accurately convey the essence of the article.
+    2. tavily_search - This tool is needed to search for information on the Internet. Use it whenever you want or if you don't have enough information to form your conclusion. Always check the information several times before forming your conclusion and try to use only verified data. If any articles of the law of the Russian Federation are mentioned: firstly you should check if this law is exists in Russian Federation, secondly if this law exists you should check if this law is still in use at the current date (You can get current date from the tool 'get_date') and lastly you should check if this law suits the main theme of the civilian request.
+    3. get_date - This tool is needed to get current date. You cam use this information for validating and checking gathered information validness.
     
     Also you will get similar info from the RAG system at the start of your work. It wil be marked like this: <recall_memory> some info </recall_memory>. Those are examples with reasonings on similar problems.
     Please provide your conclusion in Russian.
@@ -108,6 +109,13 @@ def search_memory(query: str) -> List[str]:
     documents = vs_model_markdowns.similarity_search(query, k=3, filter=qdrant_filter)
     
     return [document.page_content for document in documents]
+
+
+@tool
+def get_date() -> str:
+    """This tool can be helpful when you need to know current date for information validation"""
+
+    return f"Current date: {datetime.today()}"
 
 
 def save_final_result(state: State) -> str:
@@ -133,7 +141,7 @@ def agent(state):
     
     agent = create_agent(
         model=model,
-        tools=[search_memory, TavilySearch(max_results=3)],
+        tools=[search_memory, get_date, TavilySearch(max_results=3)],
         response_format=response,
     )
 

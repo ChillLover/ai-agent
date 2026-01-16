@@ -2,6 +2,7 @@ from langchain_deepseek import ChatDeepSeek
 from langchain_tavily import TavilySearch
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents import create_agent
+from langchain.agents.structured_output import ToolStrategy
 from langgraph.graph import StateGraph, END, START, MessagesState
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
@@ -10,6 +11,9 @@ from langchain.tools import tool, ToolRuntime
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 from langchain_ollama import OllamaEmbeddings
+from langchain_core.output_parsers import PydanticOutputParser, JsonOutputParser
+
+import re
 
 from dotenv import load_dotenv
 
@@ -50,7 +54,7 @@ user_id = "1"
 # )
 
 model = ChatDeepSeek(
-    model="deepseek-reasoner",
+    model="deepseek-chat",
     temperature=0,
     max_tokens=None,
     timeout=None,
@@ -62,10 +66,6 @@ query_embedder = OllamaEmbeddings(
     model="hf.co/dengcao/Qwen3-Embedding-0.6B-GGUF:Q8_0",
     base_url="http://84.252.132.102:11434",
 )
-
-# QUERY_URL = "http://84.252.132.102"
-# common = {"task": "feature-extraction", "model_kwargs": {"normalize": True}}
-# query_embedder = HuggingFaceEndpointEmbeddings(model=QUERY_URL, **common)
 
 vs_article_storage = QdrantVectorStore.from_existing_collection(embedding=query_embedder, collection_name="articles_collection", url="http://84.252.132.102:6333",)
 vs_model_markdowns = QdrantVectorStore.from_existing_collection(embedding=query_embedder, collection_name="model_markdowns", url="http://84.252.132.102:6333",)
@@ -80,17 +80,24 @@ class response(BaseModel):
     "write that it is not possible to fulfill.")
     final_result: bool = Field(..., description="Write 'True' if the head of the party can fulfill the request otherwise write 'False'.")
 
+parser = JsonOutputParser(pydantic_object=response)
+
 prompt = ChatPromptTemplate([
     ("system",
     """
     You are a useful assistant in the Socialist Party. Your task is to evaluate the possibilities of solving the problems described in the citizens' appeals based on the legislation of the Russian Federation. You will have to determine whether the head of the party can solve the problem described in the appeal or not. 
     You have access to those tools: 
     1. search_memory - This tool is needed in order to find additional information in the RAG system. You can use this information to make your final answer. If you have similar information that you gained frim the RAG you can make the same answer based on this similar information.
-    2. tavily_search - This tool is needed to search for information on the Internet. Use it whenever you want or if you don't have enough information to form your conclusion. Always check the information several times before forming your conclusion and try to use only verified data. If any articles of the law of the Russian Federation are mentioned: firstly you should check if this law is exists in Russian Federation, secondly if this law exists you should check if this law is still in use at the current date (You can get current date from the tool 'get_date') and lastly you should check if this law suits the main theme of the civilian request.
+    2. tavily_search - This tool is needed to search for information on the Internet. Use it whenever you want or if you don't have enough information to form your conclusion. 
+    Always check the information several times before forming your conclusion and try to use only verified data. 
+    If any articles of the law of the Russian Federation are mentioned: firstly you should check if this law is exists in Russian Federation, 
+    secondly if this law exists you should check if this law is still in use at the current date (You can get current date from the tool 'get_date') and lastly you should check if this law suits the main theme of the civilian request.
     3. get_date - This tool is needed to get current date. You cam use this information for validating and checking gathered information validness.
     
     Also you will get similar info from the RAG system at the start of your work. It wil be marked like this: <recall_memory> some info </recall_memory>. Those are examples with reasonings on similar problems.
     Please provide your conclusion in Russian.
+
+    When you making up your conclusion, you must provide the result in a certain format, as well as write your conclusion inside the fields of this format, you do not need to provide information outside the format fields: {output_format}
 
     Recall_memories: {recall_memories}
     """),
@@ -102,7 +109,7 @@ prompt = ChatPromptTemplate([
 
 
 @tool
-def search_memory(query: str) -> List[str]:
+def search_memory(query: str) -> list[str]:
     """This tool allows you to gain additional information from the RAG that you can use to make decisions"""
 
     qdrant_filter = Filter(must=[FieldCondition(key="metadata.user_id", match=MatchValue(value=user_id))])
@@ -137,21 +144,25 @@ def load_memories(state: State) -> State:
     return {"recall_memories": [document.page_content for document in sim_search], "theme_of_the_request": theme}
 
 
-def agent(state):
+def agent(state: State):
     
     agent = create_agent(
         model=model,
         tools=[search_memory, get_date, TavilySearch(max_results=3)],
-        response_format=response,
     )
 
     bound = prompt | agent
     recall_str = ("<recall_memory>\n" + "\n".join(state["recall_memories"]) + "\n</recall_memory>")
-    prediction = bound.invoke({"messages": state["messages"], "recall_memories": recall_str})
-    
-    response_data = prediction["structured_response"]
-    
-    return {"messages": [{"role": "assistant", "content": response_data.model_dump_json()}]}
+    prediction = bound.invoke({"messages": state["messages"], "recall_memories": recall_str, "output_format": parser.get_format_instructions()})
+
+    match = re.search(r'```(?:json)?\s*(.*?)\s*```', prediction["messages"][-1].content, re.DOTALL)
+
+    if match:
+        prediction = match.group(1)
+    else:
+        prediction = "Ничего нет"
+
+    return {"messages": [{"role": "assistant", "content": prediction}]}
 
 
 builder = StateGraph(State)

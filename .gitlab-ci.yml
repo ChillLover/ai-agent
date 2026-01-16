@@ -15,8 +15,8 @@ variables:
   CI_API_PATH: "api-llm"
   CI_GRADIO_UI_PATH: "ui-llm"
   PROJECT_NAME: llm
-  API_VERSION: "f1.3"
-  GRADIO_UI_VERSION: "f1.3"
+  API_VERSION: "f1.4"
+  GRADIO_UI_VERSION: "f1.4"
 
 services:
   - docker:20.10.16-dind # Docker-in-Docker (DinD) service image that allows running Docker commands inside a Docker container
@@ -55,12 +55,22 @@ deploy:
 
     # When variables contain special characters like ', / &' ,  using '|' or '@' as a delimiter prevents sed from misinterpreting the values
     - >-
-      cat k8s.yaml 
-      | sed -e "s,__UI__VERSION__,${CI_REGISTRY}/${CI_GRADIO_UI_PATH}:${GRADIO_UI_VERSION}," 
-      | sed -e "s,__API__VERSION__,${CI_REGISTRY}/${CI_API_PATH}:${API_VERSION}," 
+      cat ingress.yaml
       | sed -e "s,__PROJECT_NAME__,${PROJECT_NAME},"
       | sed -e "s|__ALB_INGRESS_SUBNET__|${ALB_INGRESS_SUBNET}|"
       | sed -e "s|__ALB_INGRESS_SEC_GROUP__|${ALB_INGRESS_SEC_GROUP}|"
+      | kubectl apply -f -
+    
+    - >-
+      cat ui.yaml 
+      | sed -e "s,__UI__VERSION__,${CI_REGISTRY}/${CI_GRADIO_UI_PATH}:${GRADIO_UI_VERSION}," 
+      | sed -e "s,__PROJECT_NAME__,${PROJECT_NAME},"
+      | kubectl apply -f -
+    
+    - >-
+      cat api.yaml 
+      | sed -e "s,__API__VERSION__,${CI_REGISTRY}/${CI_API_PATH}:${API_VERSION}," 
+      | sed -e "s,__PROJECT_NAME__,${PROJECT_NAME},"
       | kubectl apply -f -
     # reads the k8s.yaml file
     # and replaces the VERSION placeholder with the Docker image tag from the build stage, applies the Kubernetes configuration to deploy the app

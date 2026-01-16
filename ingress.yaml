@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alb-__PROJECT_NAME__
+  namespace: __PROJECT_NAME__
+  annotations:
+    ingress.alb.yc.io/external-ipv4-address: 158.160.193.111 #Public access to the load balancer from the internet. #Enter the obtained IP address or set auto to get a new IP address automatically
+    ingress.alb.yc.io/group-name: __PROJECT_NAME__-ingress-group # Group name. Ingress resources are grouped together, each group served by a separate load balancer.
+    ingress.alb.yc.io/subnets: __ALB_INGRESS_SUBNET__  # One or more subnets hosting the Application Load Balancer L7 load balancer.
+    ingress.alb.yc.io/security-groups: __ALB_INGRESS_SEC_GROUP__  # Security group for the Application Load Balancer L7 load balancer. 
+spec:
+  tls:
+    - hosts:
+        - llm.projects-pea.ru # Domain name for which the certificate is issued
+      secretName: yc-certmgr-cert-id-fpq5fj9ehibcg385kpla
+  rules:
+    - host: llm.projects-pea.ru
+      http:
+        paths:
+          - path: /api # path to the service, get from location
+            pathType: Prefix
+            backend:
+              service:
+                name: api-__PROJECT_NAME__
+                port:
+                  number: 3000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ui-__PROJECT_NAME__
+                port:
+                  number: 3001

@@ -1,0 +1,14 @@
+[project]
+name = "llm"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14.2"
+dependencies = [
+    "ipykernel>=7.1.0",
+    "langchain>=1.2.3",
+    "langchain-core>=1.2.7",
+    "langchain-deepseek>=1.0.1",
+    "langchain-tavily>=0.2.16",
+    "pydantic>=2.12.5",
+]

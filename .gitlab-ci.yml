@@ -54,12 +54,12 @@ deploy:
     - kubectl config use-context ${CI_PROJECT_PATH}:llm-agent #  account/project:<GitLab_agent_name> Replace <GitLab_agent_name> with the name of the agent in Managed Service for GitLab. 
 
     # When variables contain special characters like ', / &' ,  using '|' or '@' as a delimiter prevents sed from misinterpreting the values
-    - >-
-      cat ingress.yaml
-      | sed -e "s,__PROJECT_NAME__,${PROJECT_NAME},"
-      | sed -e "s|__ALB_INGRESS_SUBNET__|${ALB_INGRESS_SUBNET}|"
-      | sed -e "s|__ALB_INGRESS_SEC_GROUP__|${ALB_INGRESS_SEC_GROUP}|"
-      | kubectl apply -f -
+    # - >-
+    #   cat ingress.yaml
+    #   | sed -e "s,__PROJECT_NAME__,${PROJECT_NAME},"
+    #   | sed -e "s|__ALB_INGRESS_SUBNET__|${ALB_INGRESS_SUBNET}|"
+    #   | sed -e "s|__ALB_INGRESS_SEC_GROUP__|${ALB_INGRESS_SEC_GROUP}|"
+    #   | kubectl apply -f -
     
     - >-
       cat ui.yaml 

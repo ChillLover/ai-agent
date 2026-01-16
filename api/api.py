@@ -157,10 +157,7 @@ def agent(state: State):
 
     match = re.search(r'```(?:json)?\s*(.*?)\s*```', prediction["messages"][-1].content, re.DOTALL)
 
-    if match:
-        prediction = match.group(1)
-    else:
-        prediction = "Ничего нет"
+    prediction = match.group(1)
 
     return {"messages": [{"role": "assistant", "content": prediction}]}
 
